@@ -45,11 +45,11 @@ def recupData(nb_mesure):
     data = range(nb_mesure)
     for i in range (nb_mesure):
         data[i] = telemetry(T,boxelist)
-        T.left(360/nb_mesure)
         
         traceur.setheading(int(T.heading()))
         traceur.forward(int(data[i]))
         traceur.setpos(0, 0)
+        T.left(360/nb_mesure)
     
     return data
 
@@ -68,50 +68,39 @@ def listeDirections(data):
     i = 0
 
     while i < len(data) * 2 :
-        if data[i%len(data)] < 300:
+        if data[i%len(data)] < 290:
+            """ Le robot passe au minimum dans un angle de 8 """
             if cpt >= 8:
                 choix.append((float(i%len(data))-cpt/2.0) / len(data) * 360.0)
             cpt = 0
         else:
             cpt += 1
-        
-        print str(cpt) + " " + str(data[i%len(data)])
             
         i += 1
             
     return choix
-    
+
 def choixDirection(data):
+    directionMini = 180
     
-    direction = 1
-    mini = 0
-    if len(data) >= 1:
-        mini = data[0]
-        for value in data:
-            if value > 180:
-                value = value % 180
-                direction = -1
-            else:
-                direction = 1
-            if mini > value:
-                mini = value
-                
-    return mini, direction
-        
+    for i in range(len(data)):
+        if data[i] > 180:
+            data[i] = -180 + (data[i] % 180)
+    
+    for j in range(len(data)):
+        if directionMini > abs(data[j]):
+            directionMini = data[j]
+    
+    return directionMini      
 
 T.left(90)
 
 data = recupData(60)
 moyenneFlottante(data)
-
-"""print data"""
 choix = listeDirections(data)
+direction = choixDirection(choix)
 
-mini, direction = choixDirection(choix)
-
-print "Direction: " + str(direction) + " " + str(mini)
-
-T.left(int(mini) * int(direction))
+T.left(int(direction))
 T.forward(1)
 time.sleep(1)
 T.forward(150)
